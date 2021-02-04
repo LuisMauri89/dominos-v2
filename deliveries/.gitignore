@@ -1,0 +1,10 @@
+# Test binary, built with `go test -c`
+coverfile_out*
+
+### Go Patch ###
+/build/
+/build/bin/api-rest-con-master-mold
+
+# Vscode generated
+/.vscode/
+

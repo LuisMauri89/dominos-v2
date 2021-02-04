@@ -1,0 +1,128 @@
+image: docker:dind
+services:
+  - docker:latest
+
+stages:
+  - test
+  - build
+  - validation
+  - integration
+  - qa
+  - production
+
+variables:
+  KUBECONFIG: /etc/config
+  GOFLAGS: -mod=vendor
+  DEPLOY_FILE: iaas/kubernetes/deployment.yaml
+
+kube-validation:
+  stage: validation
+  image: fifintegracion/kubeval
+  script:
+    - kubeval -v 1.16.1 --strict iaas/kubernetes/deployment.yaml iaas/kubernetes/**/*.yaml -o json
+  only:
+    - branches
+
+unit-test:
+  stage: test
+  image: fifintegracion/golang:alpine
+  script:
+    - make test
+  only:
+    - branches
+
+coverage:
+  stage: test
+  image: fifintegracion/golang:alpine
+  script:
+    - make coverage
+  only:
+    - branches
+    
+build-master:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "{\"auths\":{\"$REGISTRY_FIFTECH\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile iaas/docker/Dockerfile --destination "$REGISTRY_FIFTECH/$IMAGE_NAME:$CI_COMMIT_TAG"
+  only:
+    - tags
+
+build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "{\"auths\":{\"$REGISTRY_FIFTECH\":{\"username\":\"$DOCKER_USER\",\"password\":\"$DOCKER_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile iaas/docker/Dockerfile --destination "$REGISTRY_FIFTECH/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA"
+  only:
+    - develop
+    - master
+
+.deploy: &deploy
+  image: fifintegracion/kubectl
+  only:
+    variables:
+      - $KUBE
+      - $NAMESPACE
+      - $IMAGE_VERSION
+  before_script:
+    - echo $KUBE | base64 -d > $KUBECONFIG
+  script:
+    - kubectl --namespace $NAMESPACE get deployment $DEPLOY_NAME || if [ $? -ne 0 ]; then kubectl --namespace $NAMESPACE apply -f $DEPLOY_FILE; fi;
+    - if [ -f iaas/kubernetes/$NAMESPACE/configmap.yaml ]; then kubectl --namespace $NAMESPACE apply -f iaas/kubernetes/$NAMESPACE/configmap.yaml; fi;
+    - if [ -f iaas/kubernetes/$NAMESPACE/ingress.yaml ]; then kubectl --namespace $NAMESPACE apply -f iaas/kubernetes/$NAMESPACE/ingress.yaml; fi
+    - if [ -f iaas/kubernetes/$NAMESPACE/secrets.yaml ]; then kubectl --namespace $NAMESPACE apply -f iaas/kubernetes/$NAMESPACE/secrets.yaml; fi;
+    - kubectl --namespace $NAMESPACE patch deployment $DEPLOY_NAME -p '{"spec":{"template":{"spec":{"containers":[{"name":"'"$CONTAINER_NAME"'","image":"'""$REGISTRY_FIFTECH/$IMAGE_NAME:$IMAGE_VERSION""'"}]}}}}'
+
+.prod_deploy: &prod_deploy
+  image: fifintegracion/kubectl
+  variables:
+    KUBE: $KUBE_PROD
+    NAMESPACE: prod
+    IMAGE_VERSION: $CI_COMMIT_TAG
+  extends: .deploy
+  stage: production
+  tags:
+    - runner-qa-orgrimmar
+
+.qa_deploy: &qa_deploy
+  image: fifintegracion/kubectl
+  variables:
+    KUBE: $KUBE_QA
+    NAMESPACE: qa
+    IMAGE_VERSION: $CI_COMMIT_SHORT_SHA
+  extends: .deploy
+  stage: qa
+  tags:
+    - runner-qa-orgrimmar
+
+.develop_deploy: &develop_deploy
+  image: fifintegracion/kubectl
+  variables:
+    KUBE: $KUBE_DEV
+    NAMESPACE: dev
+    IMAGE_VERSION: $CI_COMMIT_SHORT_SHA
+  extends: .deploy
+  stage: integration
+  tags:
+    - runner-qa-orgrimmar
+
+auto-deploy-develop:
+  <<: *develop_deploy
+  only:
+    - develop
+
+
+auto-deploy:
+  <<: *qa_deploy
+  only:
+    - master
+
+auto-deploy-tags:
+  <<: *prod_deploy
+  only:
+    - tags

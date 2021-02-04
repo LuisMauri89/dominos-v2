@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name:  api-rest-con-master-mold-ing
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+
+spec:
+  rules:
+    - host: integracion-k8s-dev.fif.tech
+      http:
+        paths:
+          - path:  customer
+            backend:
+              serviceName:  api-rest-con-master-mold-svc
+              servicePort: 8080

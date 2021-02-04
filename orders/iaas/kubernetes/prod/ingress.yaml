@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name:  orders-ing
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+
+spec:
+  rules:
+    - host: integracion-k8s-dcc.fif.tech
+      http:
+        paths:
+          - path:  customer
+            backend:
+              serviceName:  orders-svc
+              servicePort: 8080
