@@ -1,1 +1,1 @@
-# Demo "Dominos"
+# Demo "Dominos v2"
