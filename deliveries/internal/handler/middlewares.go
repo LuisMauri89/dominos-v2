@@ -5,7 +5,8 @@ import (
 	"deliveries/internal/service"
 	"time"
 
-	"github.com/KingDiegoA/dominos-v2/deliveries/internal/entity"
+	"deliveries/internal/entity"
+
 	"github.com/go-kit/kit/log"
 )
 
@@ -36,10 +37,10 @@ func (mw *loggingDeliveryServiceMiddleware) Create(ctx context.Context, td entit
 	return mw.DeliveryService.Create(ctx, td)
 }
 
-func (mw *loggingDeliveryServiceMiddleware) GetByStatus(ctx context.Context) ([]entity.Delivery, error) {
+func (mw *loggingDeliveryServiceMiddleware) GetByStatus(ctx context.Context, status string) (entity.Delivery, error) {
 	defer func(begin time.Time) {
 		mw.logger.Log("method", "GetByStatus", "took", time.Since(begin))
 	}(time.Now())
-	return mw.DeliveryService.GetByStatus(ctx)
+	return mw.DeliveryService.GetByStatus(ctx, status)
 
 }

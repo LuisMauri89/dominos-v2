@@ -24,7 +24,7 @@ type errorer interface {
 }
 
 // MakeHTTPHandler -
-func MakeHTTPHandler(os service.DeliveryService, ois service.DeliveryItemService, endpoints map[string]endpoint.Endpoint, logger log.Logger) http.Handler {
+func MakeHTTPHandler(os service.DeliveryService, endpoints map[string]endpoint.Endpoint, logger log.Logger) http.Handler {
 	router := mux.NewRouter()
 	options := []httptransport.ServerOption{
 		httptransport.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
@@ -49,7 +49,7 @@ func MakeHTTPHandler(os service.DeliveryService, ois service.DeliveryItemService
 		EncodeDeliveryResponse,
 		options...,
 	))
-
+	return router
 }
 
 func EncodeError(_ context.Context, err error, w http.ResponseWriter) {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -8,7 +9,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/dominos/deliveries"
+	ep "deliveries/internal/endpoint"
+	"deliveries/internal/entity"
+	"deliveries/internal/handler"
+	"deliveries/internal/service"
+
+	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/joho/godotenv"
 )
@@ -31,24 +37,26 @@ func main() {
 		panic("missing os environment vars.")
 	}
 
-	conn := deliveries.NewConnection(os.Getenv("DELIVERIES_DB_USERNAME"), os.Getenv("DELIVERIES_DB_PASSWORD"), os.Getenv("DELIVERIES_DB_NAME"), logger)
-	defer conn.DB.Close()
-	dRepository := deliveries.NewDeliveryRepository(conn)
-	tlogger := deliveries.NewLogService(logger)
-	var dService deliveries.DeliveryService
+	conn := entity.NewConnection(os.Getenv("DELIVERIES_DB_USERNAME"), os.Getenv("DELIVERIES_DB_PASSWORD"), os.Getenv("DELIVERIES_DB_NAME"), logger)
+	conn.DB.AutoMigrate(&entity.Delivery{})
+	dRepository := entity.NewDeliveryRepository(conn)
+	tlogger := service.NewLogService(logger)
+	var dService service.DeliveryService
 	{
-		dService = deliveries.NewDeliveryService(dRepository, logger, tlogger)
-		dService = deliveries.NewLoggingDeliveryMiddleware(logger)(dService)
+		dService = service.NewDeliveryService(dRepository, logger, tlogger)
+		dService = handler.NewLoggingDeliveryMiddleware(logger)(dService)
 	}
-	httpHandler := deliveries.MakeHTTPHandler(dService, logger)
+	endpoints := make(map[string]endpoint.Endpoint)
+	endpoints = ep.MakeDeliveriesEndpoints(dService, endpoints)
+	httpHandler := handler.MakeHTTPHandler(dService, endpoints, logger)
 
-	/*listener := make(chan deliveries.Payload)
-	kafkaService := deliveries.NewKafkaService()
+	listener := make(chan service.Payload)
+	kafkaService := service.NewKafkaService()
 	kafkaService.StartKafkaListener(context.Background(), listener)
 	logger.Log("kafka listener", "starting in goroutine...")
 	go func() {
 		for p := range listener {
-			dService.Create(context.Background(), deliveries.Delivery{
+			dService.Create(context.Background(), entity.Delivery{
 				OrderID:     p.ID,
 				Status:      "PENDING",
 				Name:        p.Name,
@@ -57,7 +65,7 @@ func main() {
 				Description: "Products description...",
 			})
 		}
-	}() */
+	}()
 
 	errors := make(chan error)
 	go func() {

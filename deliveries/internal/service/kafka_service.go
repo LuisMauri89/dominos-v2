@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	topic         = "dominos-deliveries-topic"
+	topic         = "dominos-orders-topic"
 	brokerAddress = "localhost:9092"
 	groupID       = "deliveries-group-id"
 )
@@ -41,7 +41,7 @@ func (s *kafkaService) StartKafkaListener(ctx context.Context, listener chan Pay
 
 func consume(ctx context.Context, listener chan Payload) {
 	logger := log.New(os.Stdout, "kafka reader: ", 0)
-	reader := kafka.NewReader(kafka.ReaderConfig)
+	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{brokerAddress},
 		Topic:   topic,
 		GroupID: groupID,

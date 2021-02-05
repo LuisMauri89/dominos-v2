@@ -11,7 +11,7 @@ import (
 )
 
 func DecodeFindAllDeliveryRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	return entity.FindAllDeliveryRequest{}, nil
+	return entity.FindAllRequest{}, nil
 }
 
 func DecodeGetByStatusDeliveryRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
@@ -20,11 +20,11 @@ func DecodeGetByStatusDeliveryRequest(_ context.Context, r *http.Request) (reque
 	if !ok {
 		return nil, ErrMissingRequiredArguments
 	}
-	return entity.GetByStatusDeliveryRequest{id}, nil
+	return entity.GetByStatusRequest{id}, nil
 }
 
 func DecodeCreateDeliveryRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	var req entity.CreateDeliveryRequest
+	var req entity.CreateRequest
 	if e := json.NewDecoder(r.Body).Decode(&req.Delivery); e != nil {
 		return nil, e
 	}

@@ -5,7 +5,6 @@ import (
 
 	"deliveries/internal/entity"
 
-	"github.com/KingDiegoA/dominos-v2/deliveries/internal/entity"
 	"github.com/go-kit/kit/log"
 )
 
@@ -40,9 +39,24 @@ func (s *deliveryService) FindAll(ctx context.Context) ([]entity.Delivery, error
 }
 
 func (s *deliveryService) Create(ctx context.Context, delivery entity.Delivery) error {
-	/*uuid, _ := uuid.NewV4()
-	id := uuid.String()
-	delivery.ID = id*/
+	delivery.Prepare()
+	err := delivery.Validate()
+	if err != nil {
+		s.logger.Log("error:", err)
+		return err
+	}
+
+	/* items := []entity.DeliveryItem{}
+	for _, deliveryitem := range delivery.Items {
+		deliveryitem.Prepare()
+		err = deliveryitem.Validate()
+		if err != nil {
+			s.logger.Log("error:", err)
+			return err
+		}
+		items = append(items, deliveryitem)
+	}
+	delivery.Items = items */
 
 	if err := s.repository.Create(ctx, delivery); err != nil {
 		s.logger.Log("error:", err)
@@ -57,4 +71,8 @@ func (s *deliveryService) Create(ctx context.Context, delivery entity.Delivery) 
 		Extra:       "Create new delivery.",
 	})
 	return nil
+}
+
+func (s *deliveryService) GetByStatus(ctx context.Context, status string) (entity.Delivery, error) {
+	return entity.Delivery{}, nil
 }
