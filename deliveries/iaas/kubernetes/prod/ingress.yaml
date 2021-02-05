@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name:  api-rest-con-master-mold-ing
+  name:  deliveries-ing
   annotations:
     ingress.kubernetes.io/rewrite-target: /
 
@@ -12,5 +12,5 @@ spec:
         paths:
           - path:  customer
             backend:
-              serviceName:  api-rest-con-master-mold-svc
+              serviceName:  deliveries-svc
               servicePort: 8080
