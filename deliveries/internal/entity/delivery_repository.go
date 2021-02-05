@@ -3,6 +3,8 @@ package entity
 import (
 	"context"
 	"errors"
+
+	"github.com/jinzhu/gorm"
 )
 
 type DeliveryRepository interface {
@@ -21,7 +23,7 @@ func NewDeliveryRepository(conn Connection) DeliveryRepository {
 }
 func (r *deliveryRepository) FindAll(ctx context.Context) ([]Delivery, error) {
 	deliveries := []Delivery{}
-	err := r.conn.DB.Find(&delivery).Error
+	err := r.conn.DB.Find(&deliveries).Error
 	if err != nil {
 		return []Delivery{}, err
 	}
@@ -38,7 +40,7 @@ func (r *deliveryRepository) Create(ctx context.Context, delivery Delivery) erro
 }
 func (r *deliveryRepository) GetByStatus(ctx context.Context, status string) (Delivery, error) {
 	deliveries := Delivery{}
-	err := r.conn.DB.Where("status = ?", status).First(&delivery).Error
+	err := r.conn.DB.Where("status = ?", status).First(&deliveries).Error
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return Delivery{}, errors.New("user not found")
@@ -46,5 +48,5 @@ func (r *deliveryRepository) GetByStatus(ctx context.Context, status string) (De
 		return Delivery{}, err
 	}
 
-	return delivery, nil
+	return deliveries, nil
 }

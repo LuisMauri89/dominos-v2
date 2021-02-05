@@ -40,9 +40,9 @@ func (s *deliveryService) FindAll(ctx context.Context) ([]entity.Delivery, error
 }
 
 func (s *deliveryService) Create(ctx context.Context, delivery entity.Delivery) error {
-	uuid, _ := uuid.NewV4()
+	/*uuid, _ := uuid.NewV4()
 	id := uuid.String()
-	delivery.ID = id
+	delivery.ID = id*/
 
 	if err := s.repository.Create(ctx, delivery); err != nil {
 		s.logger.Log("error:", err)

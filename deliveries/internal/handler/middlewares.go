@@ -2,39 +2,41 @@ package handler
 
 import (
 	"context"
+	"deliveries/internal/service"
 	"time"
 
+	"github.com/KingDiegoA/dominos-v2/deliveries/internal/entity"
 	"github.com/go-kit/kit/log"
 )
 
-type LoggingDeliveryServiceMiddleware func(s DeliveryService) DeliveryService
+type LoggingDeliveryServiceMiddleware func(s service.DeliveryService) service.DeliveryService
 
 type loggingDeliveryServiceMiddleware struct {
-	DeliveryService
+	service.DeliveryService
 	logger log.Logger
 }
 
 func NewLoggingDeliveryMiddleware(logger log.Logger) LoggingDeliveryServiceMiddleware {
-	return func(next DeliveryService) DeliveryService {
+	return func(next service.DeliveryService) service.DeliveryService {
 		return &loggingDeliveryServiceMiddleware{next, logger}
 	}
 }
 
-func (mw *loggingDeliveryServiceMiddleware) FindAll(ctx context.Context) ([]Delivery, error) {
+func (mw *loggingDeliveryServiceMiddleware) FindAll(ctx context.Context) ([]entity.Delivery, error) {
 	defer func(begin time.Time) {
 		mw.logger.Log("method", "FindAll", "took", time.Since(begin))
 	}(time.Now())
 	return mw.DeliveryService.FindAll(ctx)
 }
 
-func (mw *loggingDeliveryServiceMiddleware) Create(ctx context.Context, td Delivery) error {
+func (mw *loggingDeliveryServiceMiddleware) Create(ctx context.Context, td entity.Delivery) error {
 	defer func(begin time.Time) {
 		mw.logger.Log("method", "Create", "took", time.Since(begin))
 	}(time.Now())
 	return mw.DeliveryService.Create(ctx, td)
 }
 
-func (mw *loggingDeliveryServiceMiddleware) GetByStatus(ctx context.Context) ([]Delivery, error) {
+func (mw *loggingDeliveryServiceMiddleware) GetByStatus(ctx context.Context) ([]entity.Delivery, error) {
 	defer func(begin time.Time) {
 		mw.logger.Log("method", "GetByStatus", "took", time.Since(begin))
 	}(time.Now())

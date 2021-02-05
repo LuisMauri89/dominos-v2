@@ -4,6 +4,7 @@ import (
 	"context"
 	"deliveries/internal/service"
 
+	"github.com/KingDiegoA/dominos-v2/deliveries/internal/entity"
 	"github.com/go-kit/kit/endpoint"
 )
 
@@ -14,25 +15,25 @@ func MakeOrderEndpoints(s service.OrderService, endpoints map[string]endpoint.En
 
 	return endpoints
 }
-func makeFindAllEndpoint(s DeliveryService) endpoint.Endpoint {
+func makeFindAllEndpoint(s service.DeliveryService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		deliveries, e := s.FindAll(ctx)
-		return FindAllResponse{TDely: deliveries, Err: e}, nil
+		return entity.FindAllResponse{TDely: deliveries, Err: e}, nil
 	}
 }
 
-func makeCreateOrderEndpoint(s DeliveryService) endpoint.Endpoint {
+func makeCreateOrderEndpoint(s service.DeliveryService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req := request.(CreateOrderRequest)
+		req := request.(entity.CreateOrderRequest)
 		e := s.Create(ctx, req.Delivery)
-		return CreateOrderResponse{Err: e}, nil
+		return entity.CreateOrderResponse{Err: e}, nil
 	}
 }
 
-func makeGetByStatusEndpoint(s DeliveryService) endpoint.Endpoint {
+func makeGetByStatusEndpoint(s service.DeliveryService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		req := request.(GetByStatusRequest)
-		deliveries, e := os.GetByStatus(ctx, req.Status)
-		return GetByStatusResponse{Order: order, Err: e}, nil
+		req := request.(entity.GetByStatusRequest)
+		e := s.GetByStatus(ctx, req.Status)
+		return entity.GetByStatusResponse{Err: e}, nil
 	}
 }

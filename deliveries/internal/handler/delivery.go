@@ -20,7 +20,7 @@ func DecodeGetByStatusDeliveryRequest(_ context.Context, r *http.Request) (reque
 	if !ok {
 		return nil, ErrMissingRequiredArguments
 	}
-	return entity.GetByStatusDeliveryRequest{Status: status}, nil
+	return entity.GetByStatusDeliveryRequest{id}, nil
 }
 
 func DecodeCreateDeliveryRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
